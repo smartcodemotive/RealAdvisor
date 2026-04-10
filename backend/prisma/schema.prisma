@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PropertyStatus {
+  DRAFT
+  ACTIVE
+  SOLD
+  ARCHIVED
+}
+
+enum FlagState {
+  OPEN
+  DISMISSED
+  CONFIRMED_SCAM
+}
+
+enum FlagSource {
+  AUTO
+  MANUAL
+}
+
+model Agency {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  agents    Agent[]
+}
+
+model Agent {
+  id         String     @id @default(cuid())
+  email      String     @unique
+  name       String
+  password   String
+  agencyId   String
+  createdAt  DateTime   @default(now())
+  agency     Agency     @relation(fields: [agencyId], references: [id])
+  properties Property[] @relation("OwnerProperties")
+  coListings Property[] @relation("CoListedProperties")
+
+  @@index([agencyId])
+}
+
+model Property {
+  id              String         @id @default(cuid())
+  title           String
+  description     String
+  address         String
+  city            String
+  zipCode         String
+  country         String
+  type            String
+  price           Decimal        @db.Decimal(12, 2)
+  surfaceM2       Decimal        @db.Decimal(10, 2)
+  bedrooms        Int
+  bathrooms       Int
+  status          PropertyStatus @default(DRAFT)
+  agentId         String
+  coListedAgentId String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  activatedAt     DateTime?
+  soldAt          DateTime?
+  archivedAt      DateTime?
+  agent           Agent          @relation("OwnerProperties", fields: [agentId], references: [id])
+  coListedAgent   Agent?         @relation("CoListedProperties", fields: [coListedAgentId], references: [id])
+  views           PropertyView[]
+  flags           PropertyFlag[]
+
+  @@index([agentId, status])
+  @@index([createdAt])
+  @@index([city, type, status])
+}
+
+model PropertyView {
+  id          String   @id @default(cuid())
+  propertyId  String
+  viewedAt    DateTime @default(now())
+  viewerId    String?
+  viewerEmail String?
+  isAnonymous Boolean  @default(true)
+  userAgent   String?
+  property    Property @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, viewedAt])
+  @@index([viewedAt])
+}
+
+model PropertyFlag {
+  id           String    @id @default(cuid())
+  propertyId   String
+  source       FlagSource
+  ruleCode     String
+  confidence   Int
+  reasons      Json
+  details      Json?
+  state        FlagState @default(OPEN)
+  reviewedById String?
+  reviewReason String?
+  createdAt    DateTime  @default(now())
+  reviewedAt   DateTime?
+  property     Property  @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId, state])
+  @@index([source, state])
+}

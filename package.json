@@ -1,0 +1,27 @@
+{
+  "name": "realadvisor",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "node init && concurrently \"npm run dev --workspace backend\" \"npm run dev --workspace frontend\"",
+    "build": "node init && npm run build --workspace backend; npm run build --workspace frontend",
+    "seed": "npm run seed --workspace backend",
+    "prisma:generate": "npm run prisma:generate --workspace backend",
+    "prisma:migrate": "npm run prisma:migrate --workspace backend",
+    "prisma:deploy": "npm run prisma:deploy --workspace backend",
+    "test": "npm run test --workspace backend"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "description": "RealAdvisor technical challenge solution",
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "dotenv": "^8.2.0",
+    "node-fetch": "^3.3.2"
+  }
+}
